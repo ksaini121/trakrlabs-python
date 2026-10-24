@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from api.v1.routes import auth
+from api.v1.routes import project
 
 
 @asynccontextmanager
@@ -46,3 +47,4 @@ def health():
 
 # Routers
 app.include_router(auth.router)
+app.include_router(project.router)
