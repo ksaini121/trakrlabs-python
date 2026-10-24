@@ -1,0 +1,17 @@
+[project]
+name = "trakrlabs"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "authlib>=1.9.1",
+    "fastapi>=0.162.0",
+    "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+    "psycopg-pool>=3.3.3",
+    "psycopg[binary,pool]>=3.3.6",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",
+    "python-dotenv>=1.2.4",
+    "uvicorn>=0.54.0",
+    "yoyo-migrations>=9.0.0",
+]
