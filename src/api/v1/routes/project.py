@@ -1,41 +1,13 @@
-from datetime import datetime
 from uuid import UUID
 
 from api.deps import CurrentUser
+from api.v1.schema.project import ProjectCreate, ProjectOut, ProjectUpdate
 from db.connect import Conn
 from fastapi import APIRouter, Query
-from pydantic import BaseModel, Field
 from services.project import ProjectService
 
 router = APIRouter(prefix="/project", tags=["project"])
 project_service = ProjectService()
-
-
-class ProjectCreate(BaseModel):
-    title: str = Field(min_length=1)
-    description: str | None = None
-    github_repo_name: str = Field(min_length=1)
-    # Defaults to the creator when omitted.
-    project_admin_id: UUID | None = None
-
-
-class ProjectUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1)
-    description: str | None = None
-    github_repo_name: str | None = Field(default=None, min_length=1)
-    project_admin_id: UUID | None = None
-
-
-class ProjectOut(BaseModel):
-    id: UUID
-    title: str
-    description: str | None
-    github_repo_name: str
-    project_admin_id: UUID
-    created_by: UUID
-    modified_by: UUID
-    created_at: datetime
-    updated_at: datetime
 
 
 @router.post("", response_model=ProjectOut, status_code=201)
