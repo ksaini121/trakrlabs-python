@@ -87,3 +87,8 @@ async def update_project(
 async def delete_project(conn: AsyncConnection, project_id: UUID) -> bool:
     cur = await conn.execute(DELETE_PROJECT, (project_id,))
     return cur.rowcount > 0
+
+
+async def list_all_projects(conn: AsyncConnection) -> list[dict]:
+    cur = await conn.execute("SELECT * FROM projects ORDER BY created_at")
+    return await cur.fetchall()

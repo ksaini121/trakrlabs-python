@@ -1,15 +1,20 @@
 from uuid import UUID
 
 from db.queries import projects, users
+import httpx
 from fastapi import HTTPException
 from psycopg import AsyncConnection
 from psycopg.errors import ForeignKeyViolation
+from services.github_issues import GithubClient, GithubError
 
 # Only description is nullable in the database.
 NULLABLE_FIELDS = frozenset({"description"})
 
 
 class ProjectService:
+    def __init__(self, github_client_factory=GithubClient):
+        self._github_client = github_client_factory
+
     async def create(
         self,
         conn: AsyncConnection,
@@ -23,6 +28,7 @@ class ProjectService:
         """Create a project; the creator becomes its admin unless another user is given."""
         admin_id = project_admin_id or user["id"]
         await self._ensure_user_exists(conn, admin_id)
+        await self._ensure_repo_accessible(github_repo_name)
         return await projects.create_project(
             conn,
             title=title,
@@ -58,6 +64,9 @@ class ProjectService:
                 raise HTTPException(status_code=422, detail=f"{name} cannot be null")
         if fields.get("project_admin_id"):
             await self._ensure_user_exists(conn, fields["project_admin_id"])
+        repo = fields.get("github_repo_name")
+        if repo and repo != project["github_repo_name"]:
+            await self._ensure_repo_accessible(repo)
 
         updated = await projects.update_project(
             conn, project_id, user_id=user["id"], **fields
@@ -88,3 +97,18 @@ class ProjectService:
             raise HTTPException(
                 status_code=422, detail="project_admin_id: user not found"
             )
+
+    async def _ensure_repo_accessible(self, repo: str) -> None:
+        """Check the configured PAT can read the repo, so typos fail now rather than in the sync."""
+        try:
+            async with self._github_client() as github:
+                await github.get_repo(repo)
+        except GithubError as err:
+            if err.status_code in (403, 404):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"github_repo_name: {repo} not found or not accessible",
+                )
+            raise HTTPException(status_code=502, detail="Could not reach GitHub")
+        except httpx.HTTPError:
+            raise HTTPException(status_code=502, detail="Could not reach GitHub")

@@ -15,9 +15,13 @@ class Settings(BaseSettings):
 
     github_client_id: str
     github_client_secret: str
+    github_project_pat: str
     github_base_url: str = "https://api.github.com"
     github_access_token_url: str = "https://github.com/login/oauth/access_token"
     github_authorize_url: str = "https://github.com/login/oauth/authorize"
+
+    issue_sync_interval_hours: int = 2
+    issue_sync_on_startup: bool = True
 
     secret_key: str
     env: Literal["dev", "prod"] = "dev"

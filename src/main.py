@@ -1,19 +1,24 @@
 from contextlib import asynccontextmanager
 
 from config.settings import settings
+from core.scheduler import create_scheduler
 from db.connect import close_pool, open_pool
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from api.v1.routes import auth
+from api.v1.routes import issue
 from api.v1.routes import project
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await open_pool()
+    scheduler = create_scheduler()
+    scheduler.start()
     yield
+    scheduler.shutdown(wait=False)
     await close_pool()
 
 
@@ -48,3 +53,4 @@ def health():
 # Routers
 app.include_router(auth.router)
 app.include_router(project.router)
+app.include_router(issue.router)
